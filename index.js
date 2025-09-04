@@ -1,154 +1,111 @@
-// ==========================
-// Instagram Reels/Post/Story Downloader Bot
-// Single File Version (with HTML parse_mode)
-// ==========================
+import { Telegraf, Markup } from "telegraf";
+import fetch from "node-fetch";
 
-import { Telegraf } from "telegraf";
-import axios from "axios";
-import dotenv from "dotenv";
+// Bot Token (Render पर ENV में डालो: BOT_TOKEN)
+const bot = new Telegraf(process.env.BOT_TOKEN);
 
-dotenv.config();
-
-// ==========================
-// ENV Variables
-// ==========================
-const BOT_TOKEN = process.env.BOT_TOKEN;
-const ADMIN_ID = process.env.ADMIN_ID || "6052975324"; // optional
-const OWNER_USERNAME = process.env.OWNER_USERNAME || "dark_zozy";
-const WELCOME_PHOTO =
-  process.env.WELCOME_PHOTO ||
-  "https://placekitten.com/400/300"; // replace with your welcome image
-const JOIN_TEAM_LINK =
-  process.env.JOIN_TEAM_LINK || "https://t.me/mixy_ox";
-
-if (!BOT_TOKEN) {
-  console.error("❌ BOT_TOKEN is missing in environment variables.");
-  process.exit(1);
-}
-
-const bot = new Telegraf(BOT_TOKEN);
-
-// ==========================
-// /start Command
-// ==========================
+// Start Command
 bot.start(async (ctx) => {
   try {
     await ctx.replyWithPhoto(
-      { url: WELCOME_PHOTO },
+      "https://i.ibb.co/Y0WQZKj/reels-bot.jpg",
       {
-        caption: `✨ <b>Welcome ${ctx.from.first_name}</b> ✨\n\nI am the <b>Most Advanced Instagram Reels/Post/Story Downloader Bot</b> ⚡️\n\nMy Owner is <a href="https://t.me/${OWNER_USERNAME}">@${OWNER_USERNAME}</a> 🛠\n\n📌 Just paste any Instagram link (Reel/Post/Story) and I will download it for you! 🎉\n\n<i>Note: If used in groups, make sure to disable Bot Privacy in BotFather settings.</i>`,
-        parse_mode: "HTML",
-        reply_markup: {
-          inline_keyboard: [
-            [
-              {
-                text: "➕ Add Me in Any Group",
-                url: `https://t.me/${ctx.botInfo.username}?startgroup=true`,
-              },
-            ],
-            [
-              {
-                text: "📂 Source Code",
-                url: `https://t.me/${OWNER_USERNAME}`,
-              },
-              {
-                text: "📞 Contact",
-                url: `https://t.me/${OWNER_USERNAME}`,
-              },
-            ],
+        caption: `✨ *Welcome to Instagram Reels Downloader Bot* ✨  
+
+I can help you to download any *Reels / Post / Story* directly from Instagram 🚀  
+
+📌 Just send me any Instagram link and I’ll fetch it for you.  
+
+👨‍💻 Owner: @dark_zozy  
+`,
+        parse_mode: "Markdown",
+        ...Markup.inlineKeyboard([
+          [Markup.button.url("➕ Add Me in Any Group", "https://t.me/" + ctx.botInfo.username + "?startgroup=true")],
+          [
+            Markup.button.url("📂 Source Code", "https://t.me/dark_zozy"),
+            Markup.button.url("📞 Contact", "https://t.me/dark_zozy"),
           ],
-        },
+        ]),
       }
     );
   } catch (err) {
-    console.error("❌ /start error:", err.message);
+    console.error(err);
     ctx.reply("⚠️ Something went wrong. Please try again later.");
   }
 });
 
-// ==========================
-// Handle Instagram Links
-// ==========================
-bot.on("message", async (ctx) => {
-  try {
-    const text = ctx.message.text;
-    if (!text) return;
+// Instagram Downloader Function with API fallback
+async function getInstagramMedia(url) {
+  const apis = [
+    `https://www.save-insta.com/api/?url=${url}`,
+    `https://igram.world/api/ig?url=${url}`,
+    `https://snapinsta.app/api/?url=${url}`,
+  ];
 
-    // check if it contains Instagram link
-    if (
-      text.includes("instagram.com/reel/") ||
-      text.includes("instagram.com/p/") ||
-      text.includes("instagram.com/stories/")
-    ) {
-      await ctx.reply("⏳ Fetching your Instagram media... Please wait.");
+  for (let api of apis) {
+    try {
+      const res = await fetch(api);
+      const data = await res.json();
 
-      const apiUrl = `https://anujxyz.shop/api/instaapi.php?url=${encodeURIComponent(
-        text
-      )}`;
-
-      const response = await axios.get(apiUrl);
-      const data = response.data;
-
-      if (data.error) {
-        return ctx.reply("❌ Failed to fetch the media. Please check the link.");
+      // Check response structure (API may vary)
+      if (data && (data.media || data.url || data.links)) {
+        return data;
       }
+    } catch (err) {
+      console.log(`API failed: ${api}`);
+    }
+  }
 
-      if (data.videos && data.videos.length > 0) {
-        for (const video of data.videos) {
-          await ctx.replyWithVideo(
-            { url: video.url },
-            {
-              caption: `🎥 <b>${data.title || "Instagram Video"}</b>\n\n👉 <a href="${JOIN_TEAM_LINK}">Join Team</a>`,
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    {
-                      text: "👉 Join Team",
-                      url: JOIN_TEAM_LINK,
-                    },
-                  ],
-                ],
-              },
-            }
-          );
+  return null;
+}
+
+// Handle Instagram Links
+bot.on("text", async (ctx) => {
+  const url = ctx.message.text;
+
+  if (!url.includes("instagram.com")) {
+    return ctx.reply("⚠️ Please send a valid Instagram link.");
+  }
+
+  await ctx.reply("⏳ Fetching your Instagram media... Please wait.");
+
+  const media = await getInstagramMedia(url);
+
+  if (!media) {
+    return ctx.reply("⚠️ Something went wrong. Please try again later.");
+  }
+
+  try {
+    // Different APIs give different formats, handle accordingly
+    if (media.media) {
+      for (let item of media.media) {
+        if (item.includes(".mp4")) {
+          await ctx.replyWithVideo(item);
+        } else {
+          await ctx.replyWithPhoto(item);
         }
-      } else if (data.images && data.images.length > 0) {
-        for (const image of data.images) {
-          await ctx.replyWithPhoto(
-            { url: image },
-            {
-              caption: `🖼 <b>${data.title || "Instagram Image"}</b>\n\n👉 <a href="${JOIN_TEAM_LINK}">Join Team</a>`,
-              parse_mode: "HTML",
-              reply_markup: {
-                inline_keyboard: [
-                  [
-                    {
-                      text: "👉 Join Team",
-                      url: JOIN_TEAM_LINK,
-                    },
-                  ],
-                ],
-              },
-            }
-          );
-        }
+      }
+    } else if (media.url) {
+      if (media.url.includes(".mp4")) {
+        await ctx.replyWithVideo(media.url);
       } else {
-        ctx.reply("⚠️ No media found in this link.");
+        await ctx.replyWithPhoto(media.url);
+      }
+    } else if (media.links) {
+      for (let link of media.links) {
+        if (link.includes(".mp4")) {
+          await ctx.replyWithVideo(link);
+        } else {
+          await ctx.replyWithPhoto(link);
+        }
       }
     }
   } catch (err) {
-    console.error("❌ Message handler error:", err.message);
-    ctx.reply("⚠️ Something went wrong. Please try again later.");
+    console.error(err);
+    ctx.reply("⚠️ Failed to send media. Please try again later.");
   }
 });
 
-// ==========================
-// Start Bot
-// ==========================
+// Launch Bot
 bot.launch();
 console.log("🤖 Bot is running...");
-
-// Graceful Stop (for Render/Heroku)
-process.once("SIGINT", () => bot.stop("SIGINT"));
-process.once("SIGTERM", () => bot.stop("SIGTERM"));
