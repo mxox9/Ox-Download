@@ -10,15 +10,13 @@ bot.start(async (ctx) => {
     await ctx.replyWithPhoto(
       "https://i.ibb.co/Y0WQZKj/reels-bot.jpg",
       {
-        caption: `✨ *Welcome to Instagram Reels Downloader Bot* ✨  
+        caption: `✨ Welcome to Instagram Reels Downloader Bot ✨  
 
-I can help you to download any *Reels / Post / Story* directly from Instagram 🚀  
+I can help you to download any Reels / Post / Story directly from Instagram 🚀  
 
 📌 Just send me any Instagram link and I’ll fetch it for you.  
 
-👨‍💻 Owner: @dark_zozy  
-`,
-        parse_mode: "Markdown",
+👨‍💻 Owner: @dark_zozy`,
         ...Markup.inlineKeyboard([
           [Markup.button.url("➕ Add Me in Any Group", "https://t.me/" + ctx.botInfo.username + "?startgroup=true")],
           [
@@ -29,7 +27,7 @@ I can help you to download any *Reels / Post / Story* directly from Instagram �
       }
     );
   } catch (err) {
-    console.error(err);
+    console.error("Start command error:", err);
     ctx.reply("⚠️ Something went wrong. Please try again later.");
   }
 });
@@ -47,12 +45,11 @@ async function getInstagramMedia(url) {
       const res = await fetch(api);
       const data = await res.json();
 
-      // Check response structure (API may vary)
       if (data && (data.media || data.url || data.links)) {
         return data;
       }
     } catch (err) {
-      console.log(`API failed: ${api}`);
+      console.log(`❌ API failed: ${api}`);
     }
   }
 
@@ -76,7 +73,6 @@ bot.on("text", async (ctx) => {
   }
 
   try {
-    // Different APIs give different formats, handle accordingly
     if (media.media) {
       for (let item of media.media) {
         if (item.includes(".mp4")) {
@@ -101,7 +97,7 @@ bot.on("text", async (ctx) => {
       }
     }
   } catch (err) {
-    console.error(err);
+    console.error("Send media error:", err);
     ctx.reply("⚠️ Failed to send media. Please try again later.");
   }
 });
