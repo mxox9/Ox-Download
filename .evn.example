@@ -1,0 +1,17 @@
+# Telegram bot token (BotFather से लिया हुआ)
+BOT_TOKEN=123456:ABC-YourTokenHere
+
+# आपका numeric Telegram ID (admin)
+ADMIN_ID=6052975324
+
+# Owner username (UI में दिखेगा)
+OWNER_USERNAME=@Dark_zozy
+
+# Welcome photo (आप बाद में बदल सकते हो)
+WELCOME_PHOTO=https://picsum.photos/1000/600
+
+# Join team link (हर media के नीचे)
+JOIN_TEAM_LINK=https://t.me/mixy_ox
+
+# Server port (Render/Railway auto-set कर देगा)
+PORT=3000
