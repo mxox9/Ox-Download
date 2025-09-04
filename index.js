@@ -8,7 +8,7 @@ const bot = new Telegraf(process.env.BOT_TOKEN);
 bot.start(async (ctx) => {
   try {
     await ctx.replyWithPhoto(
-      "https://i.ibb.co/Y0WQZKj/reels-bot.jpg",
+      "https://i.ibb.co/8DJn3ZWv/0dc34489-f0ab-49a3-aec1-e3a8f706dba4.jpg",
       {
         caption: `✨ Welcome to Instagram Reels Downloader Bot ✨  
 
